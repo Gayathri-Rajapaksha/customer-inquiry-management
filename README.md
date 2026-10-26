@@ -179,21 +179,25 @@ npm run db:test
 
 ## 🏃 Running the Application
 
-Open two terminal windows:
+To run the application, choose **only one** of the two alternative backend commands below to start the backend in your first terminal, then open a second terminal to run the frontend client.
 
 ### Terminal 1: Backend API Server
-Start the backend using development mode (with nodemon) or standard mode:
+Choose **one** of the following alternative commands to start the backend:
 
-```powershell
-# Development mode (with nodemon file watcher):
-npm run dev:backend
+- **Option A (Development mode with nodemon file watcher)**:
+  ```powershell
+  npm run dev:backend
+  ```
+- **Option B (Standard mode without the development watcher)**:
+  ```powershell
+  npm run start:backend
+  ```
 
-# Standard mode (starts the backend with Node directly, without the development watcher):
-npm run start:backend
-```
 *The Express API will start on `http://localhost:5000`.*
 
 ### Terminal 2: Frontend Client
+Once the backend is running, open a second terminal to start the frontend:
+
 ```powershell
 # From project root:
 npm run dev:frontend
