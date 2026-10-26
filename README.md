@@ -53,7 +53,7 @@ A full-stack, enterprise-grade Customer Inquiry Management System built for Coff
 customer-inquiry-management/
 ├── .gitignore                     # Git exclusion rules (.env, node_modules, dist)
 ├── backend/
-│   ├── .env                       # Local environment configuration (developer-configured)
+│   ├── .env                       # Local-only file; create from .env.example, never commit
 │   ├── .env.example               # Template environment configuration
 │   ├── package.json               # Backend dependencies and scripts
 │   ├── src/
@@ -182,12 +182,14 @@ npm run db:test
 Open two terminal windows:
 
 ### Terminal 1: Backend API Server
+Start the backend using development mode (with nodemon) or standard mode:
+
 ```powershell
-# From project root (development mode with nodemon):
+# Development mode (with nodemon file watcher):
 npm run dev:backend
 
-# Or run with Node directly:
-# npm run start:backend
+# Standard mode (starts the backend with Node directly, without the development watcher):
+npm run start:backend
 ```
 *The Express API will start on `http://localhost:5000`.*
 
