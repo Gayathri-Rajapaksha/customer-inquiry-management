@@ -1,6 +1,6 @@
 # Coffee Ninja — Customer Inquiry Management System
 
-A full-stack, enterprise-grade Customer Inquiry Management System built for Coffee Ninja's wholesale and retail operations. The system allows authorized staff members to authenticate securely, monitor support and wholesale inquiries in real-time, triage incoming tickets, create new customer requests, update statuses, and view system diagnostics.
+A full-stack, enterprise-grade Customer Inquiry Management System built for Coffee Ninja's wholesale and retail operations. The system allows authorized staff members to authenticate securely, monitor support and wholesale inquiries in real-time, triage incoming tickets, create new customer requests, and update inquiry statuses.
 
 ---
 
@@ -28,8 +28,9 @@ A full-stack, enterprise-grade Customer Inquiry Management System built for Coff
 - **Status Triage**: One-click status transitions between `New`, `In Progress`, and `Resolved`.
 - **Stale Data Protection**: Remote refresh capabilities and friendly conflict handling when working across multiple browser tabs.
 
-### 5. Diagnostics & Health Check
-- Dedicated system diagnostics tab preserving Stage 1 foundation checks (`GET /api/health`), environment verification, and database checks.
+### 5. System Health & Database Diagnostics
+- **Foundation Health Check**: Public health check endpoint (`GET /api/health`) reporting service status, runtime environment, and current server timestamp.
+- **Database Connectivity Diagnostics**: CLI connectivity verification script (`npm run db:test`) validating PostgreSQL pool connectivity and query latency.
 
 ---
 
@@ -39,7 +40,7 @@ A full-stack, enterprise-grade Customer Inquiry Management System built for Coff
 |---|---|
 | **Frontend** | React 18, Vite 5, Vanilla Modern CSS (Navy/Cyan Design System) |
 | **Backend** | Node.js (v20+), Express 4 |
-| **Database** | PostgreSQL 18.6 (Pool connection with `pg`) |
+| **Database** | PostgreSQL 14+ (Pool connection with `pg`) |
 | **Session Store** | PostgreSQL-backed sessions (`connect-pg-simple`) |
 | **Password Hashing** | `bcryptjs` |
 | **Testing** | Node.js Test Runner (`node:test`, `node:assert`), `supertest` |
@@ -50,8 +51,9 @@ A full-stack, enterprise-grade Customer Inquiry Management System built for Coff
 
 ```
 customer-inquiry-management/
+├── .gitignore                     # Git exclusion rules (.env, node_modules, dist)
 ├── backend/
-│   ├── .env                       # Local environment configuration
+│   ├── .env                       # Local environment configuration (developer-configured)
 │   ├── .env.example               # Template environment configuration
 │   ├── package.json               # Backend dependencies and scripts
 │   ├── src/
@@ -92,7 +94,7 @@ customer-inquiry-management/
 │   │       ├── InquiryDashboard.jsx # Metrics, filters, and inquiry table
 │   │       ├── CreateInquiryModal.jsx # New inquiry modal form
 │   │       ├── InquiryDetailModal.jsx # Detail viewer & status updater
-│   │       └── SystemDiagnostics.jsx  # Health check & architecture checks
+│   │       └── SystemDiagnostics.jsx  # Standalone diagnostics component (not mounted in navigation)
 │   └── tests/
 │       ├── deepLink.test.js       # Deep-link parameter parsing & state tests
 │       └── validation.test.js     # Frontend validation & interaction tests
@@ -132,7 +134,7 @@ Open `backend/.env` in your editor and configure your environment:
 - Set `PGPASSWORD` to your local PostgreSQL password.
 - Set `SESSION_SECRET` to a strong, random secret string.
 - Adjust `PGHOST`, `PGPORT`, `PGUSER`, or `PGDATABASE` if your local PostgreSQL instance differs from the standard defaults (`localhost`, `5432`, `postgres`, `customer_inquiry_db`).
-- (Optional) Customize `SEED_STAFF_EMAIL` or `SEED_STAFF_PASSWORD` if you wish to override the initial development login credentials.
+- Configure `SEED_STAFF_EMAIL` and `SEED_STAFF_PASSWORD` with the initial staff credentials to be seeded into the database. If `SEED_STAFF_EMAIL` is omitted, it defaults to `admin@coffeeninja.com`. The developer must provide a secure password via `SEED_STAFF_PASSWORD`.
 
 > [!IMPORTANT]
 > Do not commit `backend/.env` or any real credentials or secrets to version control. The repository's `.gitignore` excludes `.env` files to prevent secret leakage.
@@ -163,9 +165,9 @@ npm run db:setup
 
 This single command executes:
 1. `backend/src/db/migrate.js`: Executes `schema.sql` inside a database transaction to create the `staff_users`, `inquiries`, and `session` tables and their indexes.
-2. `backend/src/db/seed.js`: Securely hashes the initial staff password using `bcryptjs` (default: `admin@coffeeninja.com`), upserts the staff user, and populates initial sample inquiries.
+2. `backend/src/db/seed.js`: Securely hashes the initial staff password configured via `SEED_STAFF_PASSWORD` (for staff account `SEED_STAFF_EMAIL`, default: `admin@coffeeninja.com`) using `bcryptjs`, upserts the staff user, and populates initial sample inquiries.
 
-*(Alternatively, you can run the individual scripts: `npm run db:migrate` and `npm run db:seed`).*
+*(Alternatively, you can run the individual scripts from the root: `npm run db:migrate` and `npm run db:seed`).*
 
 ### Step 3: Verify Database Connectivity
 To verify that the backend can connect to PostgreSQL successfully:
@@ -181,10 +183,13 @@ Open two terminal windows:
 
 ### Terminal 1: Backend API Server
 ```powershell
-# From project root:
+# From project root (development mode with nodemon):
 npm run dev:backend
+
+# Or run with Node directly:
+# npm run start:backend
 ```
-*The Express API will start on `http://localhost:5000` with nodemon.*
+*The Express API will start on `http://localhost:5000`.*
 
 ### Terminal 2: Frontend Client
 ```powershell
@@ -197,12 +202,12 @@ Open your browser and navigate to: **[http://localhost:5173](http://localhost:51
 
 ---
 
-## 🔑 Development Staff Login
+## 🔑 Staff Login
 
-- **URL**: `http://localhost:5173`
-- **Default Staff Email**: `admin@coffeeninja.com`
-- **Default Staff Password**: `CoffeeNinja2026!` *(configured in `backend/.env`)*
-- *Tip*: On the login screen, click **"Autofill Staff Email"** to quickly populate the email field.
+- **URL**: [http://localhost:5173](http://localhost:5173)
+- **Staff Email**: Configured via `SEED_STAFF_EMAIL` in `backend/.env` (default: `admin@coffeeninja.com`)
+- **Staff Password**: Configured via `SEED_STAFF_PASSWORD` in `backend/.env`
+- On the login screen, enter the configured staff email and password into the respective input fields and click **"Sign In"** to authenticate.
 
 ---
 
@@ -231,7 +236,11 @@ Staff can navigate directly to specific inquiry records using `?inquiry=<id>`, e
 ### Clearing Sessions & Fresh State Testing
 Sessions are stored in PostgreSQL (`session` table) and persist across backend restarts. To immediately invalidate all active sessions:
 ```powershell
+# From project root:
 npm run db:clear-sessions
+
+# Or from backend directory:
+# npm run db:clear-sessions
 ```
 
 ### Manual Verification of Protected Endpoints
